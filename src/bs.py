@@ -24,6 +24,9 @@ def bs_price(S, K, T, r, q, sigma, kind="call"):
 
     S, K, T, r, q, sigma = (np.asarray(x, dtype=float) for x in (S, K, T, r, q, sigma))
 
+    if np.any(T <= 0) or np.any(sigma <= 0):
+        raise ValueError("T et sigma doivent être strictement positifs")
+
     vol_sqrt_t = sigma * np.sqrt(T)
     d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / vol_sqrt_t
     d2 = d1 - vol_sqrt_t

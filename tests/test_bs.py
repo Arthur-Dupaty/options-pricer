@@ -35,3 +35,42 @@ def test_bornes_call():
 def test_kind_invalide():
     with pytest.raises(ValueError):
         bs_price(100, 100, 1, 0.05, 0, 0.20, kind="cal")
+
+@pytest.mark.parametrize("T, sigma", [(0.0, 0.20), (-1.0, 0.20), (1.0, 0.0), (1.0, -0.20)])
+def test_parametres_invalides(T, sigma):
+    with pytest.raises(ValueError):
+        bs_price(100, 100, T, 0.05, 0.0, sigma)
+
+
+def test_limite_maturite_nulle():
+    cours = np.array([80.0, 90.0, 110.0, 120.0])
+    call = bs_price(cours, 100, 1e-8, R, Q, SIGMA)
+    assert np.allclose(call, np.maximum(cours - 100, 0.0), atol=1e-4)
+
+
+def test_limite_volatilite_nulle():
+    call = bs_price(S, K, T, R, Q, 1e-8)
+    forward_actualise = S * np.exp(-Q * T) - K * np.exp(-R * T)
+    assert np.allclose(call, np.maximum(forward_actualise, 0.0), atol=1e-6)
+
+GRILLE = np.linspace(50.0, 150.0, 21)
+
+
+def test_call_croit_avec_le_cours():
+    call = bs_price(GRILLE, 100, 1, R, Q, SIGMA)
+    assert np.all(np.diff(call) > 0)
+
+
+def test_call_decroit_avec_le_strike():
+    call = bs_price(100, GRILLE, 1, R, Q, SIGMA)
+    assert np.all(np.diff(call) < 0)
+
+
+def test_call_croit_avec_la_volatilite():
+    call = bs_price(100, 100, 1, R, Q, np.linspace(0.05, 0.80, 16))
+    assert np.all(np.diff(call) > 0)
+
+
+def test_put_croit_avec_le_strike():
+    put = bs_price(100, GRILLE, 1, R, Q, SIGMA, "put")
+    assert np.all(np.diff(put) > 0)
